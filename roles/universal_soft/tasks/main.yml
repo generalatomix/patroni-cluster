@@ -1,0 +1,13 @@
+- name: Install neccessary soft
+  apt:
+    pkg:
+      - htop
+      - iotop
+      - sysstat
+      - net-tools
+      - netcat
+      - telnet
+      - strace
+      - tcpdump
+    state: latest
+    update_cache: true

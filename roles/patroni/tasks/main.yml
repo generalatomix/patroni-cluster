@@ -1,0 +1,5 @@
+- name: Add patrtoni config
+  template: 
+    src: templates/patroni.cfg.j2
+    dest: /home/unix/patroni.cfg
+    mode: 644

@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - universal_soft
+- hosts: postgres
+  become: true
+  roles:
+    - postgres
+    - patroni
