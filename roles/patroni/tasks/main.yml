@@ -1,5 +1,25 @@
+- name: Install python prerequisites
+  apt:
+    pkg:
+      - python3-pip
+      - python3-dev
+      - libpq-dev
+    state: latest
+    update_cache: true
+- name: Install patroni
+  pip:
+    executable: pip3
+    name:
+      - patroni
+      - python-etcd
+      - psycopg2
 - name: Add patrtoni config
   template: 
     src: templates/patroni.cfg.j2
-    dest: /home/unix/patroni.cfg
+    dest: /etc/patroni.yml
+    mode: 644
+- name: Add patroni service unit
+  file:
+    src: files/patroni.service
+    dest: /usr/lib/systemd/system/patroni.service
     mode: 644
