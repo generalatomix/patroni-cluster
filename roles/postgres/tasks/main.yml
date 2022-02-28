@@ -5,3 +5,9 @@
       - postgresql-contrib
     state: latest
     update_cache: true
+- name: stop postgres to apply patroni cfg
+  systemd:
+    name: postgresql
+    state: stopped
+    daemon_reload: yes
+    enabled: yes

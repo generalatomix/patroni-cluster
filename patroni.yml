@@ -3,8 +3,18 @@
   become: true
   roles:
     - universal_soft
+- hosts: etcd
+  become: true
+  roles:
+    - etcd
 - hosts: postgres
   become: true
+  serial: 1 # !!!!
   roles:
     - postgres
     - patroni
+- hosts: haproxy
+  become: true
+  roles: 
+    - haproxy
+

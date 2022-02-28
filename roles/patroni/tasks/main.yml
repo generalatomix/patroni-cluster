@@ -19,7 +19,28 @@
     dest: /etc/patroni.yml
     mode: 644
 - name: Add patroni service unit
-  file:
+  copy:
     src: files/patroni.service
     dest: /usr/lib/systemd/system/patroni.service
     mode: 644
+- name: Make data directory
+  file:
+    path: /mnt/patroni
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: 0750
+- name: Start postgres
+  systemd:
+    name: postgresql
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+- name: Start patroni
+  systemd:
+    name: patroni
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+- name: sleep 40 seconds for cluster to init
+  shell: sleep 40

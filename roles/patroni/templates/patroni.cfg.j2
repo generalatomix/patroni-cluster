@@ -1,43 +1,31 @@
-scope: pgsql 
-namespace: /{{ cluster_name }}/ 
-name: {{ cluster_name }}
+
+scope: {{ cluster_name }}
+namespace: /db2/
+name: {{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}
 
 restapi:
-    listen: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:8008 # адрес той ноды, в которой находится этот файл
-    connect_address: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:8008 # адрес той ноды, в которой находится этот файл
+    listen:  {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:8008
+    connect_address:  {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:8008
 
 etcd:
-    hosts: {{ groups['postgres'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | map('regex_replace', '^(.*)$', '\\1:2379') | join(',')  }} 
+    hosts: {{ groups['etcd'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | map('regex_replace', '^(.*)$', '\\1:2379') | join(',')  }}
 
-# this section (bootstrap) will be written into Etcd:/<namespace>/<scope>/config after initializing new cluster
-# and all other cluster members will use it as a `global configuration`
 bootstrap:
     dcs:
-        ttl: 100
+        ttl: 30
         loop_wait: 10
         retry_timeout: 10
         maximum_lag_on_failover: 1048576
-        postgresql:
-            use_pg_rewind: true
-            use_slots: true
-            parameters:
-                    wal_level: replica
-                    hot_standby: "on"
-                    wal_keep_segments: 5120
-                    max_wal_senders: 5
-                    max_replication_slots: 5
-                    checkpoint_timeout: 30
 
     initdb:
     - encoding: UTF8
     - data-checksums
-    - locale: en_US.UTF8
+
     pg_hba:
-    - host replication postgres ::1/128 md5
-    - host replication postgres 127.0.0.1/8 md5
-    {% for host in groups['postgres'] %}
-    - host replication postgres {{ loop.index,hostvars[host]['ansible_default_ipv4', 'address'] }}
-    {% endfor %}
+    - host replication replicator 127.0.0.1/32 md5
+{% for host in groups['postgres'] %}
+    - host replication postgres {{ hostvars[host]['ansible_default_ipv4']['address'] }}/32 md5
+{% endfor %}
     - host all all 0.0.0.0/0 md5
 
     users:
@@ -48,11 +36,11 @@ bootstrap:
                 - createdb
 
 postgresql:
-    listen: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5432 
+    listen: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5432
     connect_address: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5432
-    data_dir: /mnt/patroni 
-    bin_dir:  /usr/lib/postgresql/12/bin
+    data_dir: /mnt/patroni
     pgpass: /tmp/pgpass
+    bin_dir: /usr/lib/postgresql/12/bin/
     authentication:
         replication:
             username: postgres
@@ -60,9 +48,6 @@ postgresql:
         superuser:
             username: postgres
             password: postgres
-    create_replica_methods:
-        basebackup:
-            checkpoint: 'fast'
     parameters:
         unix_socket_directories: '.'
 

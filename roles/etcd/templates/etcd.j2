@@ -1,0 +1,15 @@
+[member]
+ETCD_NAME={{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+ETCD_LISTEN_PEER_URLS="http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2380,http://127.0.0.1:7001"
+ETCD_LISTEN_CLIENT_URLS="http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2379,http://127.0.0.1:2379"
+[cluster]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2380"
+{% set main_nodes_hostname=[] %}
+{% for host in groups['etcd'] %}
+    {{ main_nodes_hostname.insert( loop.index,(hostvars[host]['inventory_hostname'] + '=http://' + hostvars[host]['ansible_default_ipv4']['address'] + ':2380' ))}}
+{% endfor %}
+ETCD_INITIAL_CLUSTER="{{ main_nodes_hostname | join(',') }}" 
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-{{ cluster_name }}"
+ETCD_ADVERTISE_CLIENT_URLS="http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:2379"
